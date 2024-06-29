@@ -83,7 +83,7 @@ esp_err_t get_sensor_data(httpd_req_t *req)
 		return ESP_FAIL;
 	}
 	xQueuePeek(g_sensor_que, &data, portMAX_DELAY);
-	sprintf(json, "{\"temperature\": \"%.2f\", \"humidity\": \"%.2f\", \"soilMoisture\": \"0.0\", \"co2Level\": \"0.0\"}", data.temperature, data.humidity);
+	sprintf(json, "{\"temperature\": \"%.2f\", \"humidity\": \"%.2f\", \"soilMoisture\": \"%d\", \"co2Level\": \"NaN\"}", data.temperature, data.humidity, data.soil_moisture);
 	httpd_resp_set_type(req, HTTPD_TYPE_JSON);
 	httpd_resp_send(req, json, HTTPD_RESP_USE_STRLEN);
 	return ESP_OK;
