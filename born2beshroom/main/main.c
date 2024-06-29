@@ -2,20 +2,25 @@
 
 #include "esp_err.h"
 #include "esp_spiffs.h"
-#include "freertos/idf_additions.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "portmacro.h"
 
 #include "DHT22.h"
 
+QueueHandle_t	g_sensor_que;
+
 static void DHT_reader_task(void *pvParameter)
 {
 	while(1) {
+		t_sensor_data	sensor_data = {};
 		int ret = readDHT();
 		errorHandler(ret);
 		// ESP_LOGI(TAG, "Humidity: %.2f %%	| Temperature: %.2f degC", getHumidity(), getTemperature());
-		vTaskDelay(2000 / portTICK_PERIOD_MS);
+		sensor_data.humidity = getHumidity();
+		sensor_data.temperature = getTemperature();
+		xQueueOverwrite(g_sensor_que, &sensor_data);
+		vTaskDelay(3000 / portTICK_PERIOD_MS);
 	}
 }
 
@@ -41,21 +46,40 @@ void app_main(void)
 	};
 	ESP_ERROR_CHECK(esp_vfs_spiffs_register(&spiff_config));
 
-	setDHTgpio(27);
+	g_sensor_que = xQueueCreate(1, sizeof(t_sensor_data));
+	if (!g_sensor_que)
+	{
+		ESP_LOGE(TAG, "Failed to create data queue. Terminating");
+		return;
+	}
+	t_sensor_data	sensor_init = {.temperature = 0.0f, .humidity = 0.0f};
+	xQueueSend(g_sensor_que, &sensor_init, portMAX_DELAY);
+	xQueuePeek(g_sensor_que, &sensor_init, 0);
+	ESP_LOGI(TAG, "Peeked: %.2f / %.2f", sensor_init.temperature, sensor_init.humidity);
+
+	setDHTgpio(DHT_GPIO_PIN);
 	vTaskDelay(2000 / portTICK_PERIOD_MS);
 	xTaskCreate(&DHT_reader_task, "DHT_reader_task", 2048, NULL, 5, NULL);
 
-	status = connect_wifi();
+	// status = init_wifi();
+	// if (status != WIFI_SUCCESS)
+	// {
+	// 	ESP_LOGE(TAG, "Failed to associate with Access Point. Terminating");
+	// 	return;
+	// }
+
+	status = init_wifi_ap();
 	if (status != WIFI_SUCCESS)
 	{
-		ESP_LOGE(TAG, "Failed to associate with Access Point. Terminating");
+		ESP_LOGE(TAG, "Failed to setup Access Point. Terminating");
 		return;
 	}
 
-	status = start_tcp_server();
-	esp_vfs_spiffs_unregister(NULL);
-	if (status != TCP_SUCCESS)
+	// status = start_tcp_server();
+	status = start_server();
+	if (status != ESP_OK)
 	{
+		esp_vfs_spiffs_unregister(NULL);
 		ESP_LOGE(TAG, "Failed to connect to remote server. Terminating");
 		return;
 	}

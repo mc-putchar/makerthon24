@@ -3,13 +3,26 @@ menu "SHROOM WiFi configuration"
 		string "WiFi SSID"
 		default "myssid"
 		help
-			SSID (network name) to connect to.
+			SSID (network name) to create/connect to.
 
 	config ESP_WIFI_PASSWORD
 		string "WiFi password"
 		default "mypassword"
 		help
 			WiFi password (WPA/WPA2) to use.
+
+	config ESP_WIFI_CHANNEL
+		int "WiFi channel"
+		range 1 13
+		default 1
+		help
+			WiFi network channel to use.
+
+	config ESP_MAX_STA_CONN
+		int "Maximum STA connections"
+		default 4
+		help
+			Maximum number of the STA connections to this AP.
 
 	config ESP_MAXIMUM_RETRY
 		int "Maximum retry"

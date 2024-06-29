@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('/sensor_data')
             .then(response => response.json())
             .then(data => {
-                temperatureElement.textContent = data.temperature + ' °C';
+                temperatureElement.textContent = data.temperature + ' \xB0C';
                 humidityElement.textContent = data.humidity + ' %';
                 soilMoistureElement.textContent = data.soilMoisture + ' %';
                 co2LevelElement.textContent = data.co2Level + ' ppm';
