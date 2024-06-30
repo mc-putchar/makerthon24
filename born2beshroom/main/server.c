@@ -27,7 +27,7 @@ esp_err_t	get_favicon_handler(httpd_req_t *req)
 esp_err_t	send_file_chunks(httpd_req_t *req, char const *file, char const *type)
 {
 	char	filepath[128];
-	sprintf(filepath, "%s%s", FILE_PATH_PREFIX, file);
+	sprintf(filepath, "%s/%s", FILE_PATH_PREFIX, file);
 	FILE *fd = fopen(filepath, "r");
 	if (!fd)
 	{
@@ -83,7 +83,7 @@ esp_err_t get_sensor_data(httpd_req_t *req)
 		return ESP_FAIL;
 	}
 	xQueuePeek(g_sensor_que, &data, portMAX_DELAY);
-	sprintf(json, "{\"temperature\": \"%.2f\", \"humidity\": \"%.2f\", \"soilMoisture\": \"%d\", \"co2Level\": \"NaN\"}", data.temperature, data.humidity, data.soil_moisture);
+	sprintf(json, "{\"temperature\": \"%.2f\", \"humidity\": \"%.2f\", \"soilMoisture\": \"%d\", \"co2Level\": \"Not implemented\"}", data.temperature, data.humidity, data.soil_moisture);
 	httpd_resp_set_type(req, HTTPD_TYPE_JSON);
 	httpd_resp_send(req, json, HTTPD_RESP_USE_STRLEN);
 	return ESP_OK;

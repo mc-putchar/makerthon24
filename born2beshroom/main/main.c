@@ -76,7 +76,7 @@ void	init_moisture_sensor(void)
 	};
 	adc_oneshot_chan_cfg_t config = {
 		.bitwidth = ADC_BITWIDTH_DEFAULT,
-		.atten = ADC_ATTEN_DB_0,
+		.atten = ADC_ATTEN_DB_12,
 	};
 
 	ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config1, &adc1_handle));
@@ -96,7 +96,7 @@ static void DHT_reader_task(void *pvParameter)
 		sensor_data.temperature = getTemperature();
 		sensor_data.soil_moisture = get_moisture_reading(do_calibration);
 		xQueueOverwrite(g_sensor_que, &sensor_data);
-		vTaskDelay(3000 / portTICK_PERIOD_MS);
+		vTaskDelay(SENSOR_POLLING_DELAY / portTICK_PERIOD_MS);
 	}
 }
 
@@ -115,7 +115,7 @@ void app_main(void)
 
 	/* Init SPI Flash file system */
 	esp_vfs_spiffs_conf_t spiff_config = {
-		.base_path = "/spiffs",
+		.base_path = FILE_PATH_PREFIX,
 		.partition_label = NULL,
 		.max_files = 5,
 		.format_if_mount_failed = true,
@@ -136,24 +136,27 @@ void app_main(void)
 	ESP_LOGI(TAG, "Peeked: %.2f / %.2f", sensor_init.temperature, sensor_init.humidity);
 
 	setDHTgpio(DHT_GPIO_PIN);
-	vTaskDelay(2000 / portTICK_PERIOD_MS);
+	vTaskDelay(SENSOR_POLLING_DELAY / portTICK_PERIOD_MS);
 	xTaskCreate(&DHT_reader_task, "DHT_reader_task", 2048, NULL, 5, NULL);
 
-	// status = init_wifi();
-	// if (status != WIFI_SUCCESS)
-	// {
-	// 	ESP_LOGE(TAG, "Failed to associate with Access Point. Terminating");
-	// 	return;
-	// }
-
-	status = init_wifi_ap();
-	if (status != WIFI_SUCCESS)
+	if (WIFI_MODE_AP)
 	{
-		ESP_LOGE(TAG, "Failed to setup Access Point. Terminating");
-		return;
+		status = init_wifi_ap();
+		if (status != WIFI_SUCCESS)
+		{
+			ESP_LOGE(TAG, "Failed to setup Access Point. Terminating");
+			return;
+		}
 	}
-
-	// status = start_tcp_server();
+	else
+	{
+		status = init_wifi();
+		if (status != WIFI_SUCCESS)
+		{
+			ESP_LOGE(TAG, "Failed to associate with Access Point. Terminating");
+			return;
+		}
+	}
 	status = start_server();
 	if (status != ESP_OK)
 	{

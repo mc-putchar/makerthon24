@@ -8,10 +8,10 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('/sensor_data')
             .then(response => response.json())
             .then(data => {
-                temperatureElement.textContent = data.temperature + ' \xB0C';
-                humidityElement.textContent = data.humidity + ' %';
-                soilMoistureElement.textContent = data.soilMoisture + ' %';
-                co2LevelElement.textContent = data.co2Level + ' ppm';
+                temperatureElement.textContent = '\u{1f321} ' + data.temperature + ' \xB0C';
+                humidityElement.textContent = '\u{1f32b} ' + data.humidity + ' %';
+                soilMoistureElement.textContent = '\u{1f4a7} ' + data.soilMoisture + ' %';
+                co2LevelElement.textContent = '\u{1fa9f} ' + data.co2Level + ' ppm';
             })
             .catch(error => {
                 console.error('Error fetching sensor data:', error);
@@ -23,5 +23,5 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     fetchSensorData();
-    setInterval(fetchSensorData, 5000);
+    setInterval(fetchSensorData, 2000);
 });
